@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="home-page">
+  <h2>Home</h2>
+
+  {% if portal_items and portal_items|length > 0 %}
+    <section>
+      <h3>Quick Links</h3>
+      <div class="cards cards-center">
+        {% for it in portal_items %}
+          <a class="card" href="{{ it.url or it.href }}" {% if it.new_tab %}target="_blank" rel="noopener"{% endif %}>
+            <div class="card-icon">
+  {% if it.icon_html %}{{ it.icon_html|safe }}
+  {% elif it.icon_class %}<i class="{{ it.icon_class }}"></i>
+  {% elif it.icon %}<i class="{{ it.icon }}"></i>
+  {% else %}🔗{% endif %}
+</div>
+            <div class="card-title">{{ it.title }}</div>
+          </a>
+
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  {% if home_modules and home_modules|length > 0 %}
+    <section>
+      <h3>Modules</h3>
+      <div class="cards cards-center">
+  {% for m in home_modules %}
+    <div class="card-item" data-module-key="{{ m.key }}" data-settings-href="{{ m.settings_href }}" data-has-settings="{{ m.has_settings }}">
+      <a class="card" href="{{ m.href }}">
+        <div class="card-icon">{% if m.icon_html %}{{ m.icon_html|safe }}
+{% elif m.icon_class %}<i class="{{ m.icon_class }}"></i>
+{% elif m.icon %}<i class="{{ m.icon }}"></i>
+{% else %}📦{% endif %}</div>
+        <div class="card-title">{{ m.label }}</div>
+        {% if m.description %}<div class="card-desc">{{ m.description }}</div>{% endif %}
+      </a>
+      {% if current_user.is_authenticated and ("admin" in (current_user.roles or []) or ('admin' in ((current_user.roles or [None])[0]|default('')|lower)) or ('admin' in (current_user.roles|default([])))) and m.settings_href %}
+        <a class="module-gear" href="{{ m.settings_href }}" title="Module settings" aria-label="Module settings">⚙</a>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
+    </section>
+  {% endif %}
+
+  {% if (not portal_items or portal_items|length == 0) and (not home_modules or home_modules|length == 0) %}
+    <p>No items configured yet. Visit <a href="{{ url_for('settings.index') }}">Admin Settings</a>.</p>
+  {% endif %}
+
+{% if current_user.is_authenticated %}
+<div id="home-order-actions" class="save-order-row" hidden>
+  <button id="save-home-order" class="btn">Save order</button>
+  <span id="save-home-order-status" class="muted" aria-live="polite"></span>
+</div>
+{% endif %}
+<script>
+(function(){
+  const grid = document.querySelector('section:nth-of-type(2) .cards') || document.querySelector('.cards');
+  if(!grid) return;
+  const isAuth = {{ 'true' if current_user.is_authenticated else 'false' }};
+  const cards = Array.from(grid.querySelectorAll('.card-item[data-module-key]'));
+  grid.classList.add('dnd-grid');
+  cards.forEach(card => {
+    card.setAttribute('draggable', 'true');
+    card.addEventListener('dragstart', ev => {
+      ev.dataTransfer.setData('text/plain', card.dataset.moduleKey);
+      card.classList.add('drag-ghost');
+    });
+    card.addEventListener('dragend', () => card.classList.remove('drag-ghost'));
+  });
+  grid.addEventListener('dragover', ev => { ev.preventDefault(); });
+  grid.addEventListener('drop', ev => {
+    ev.preventDefault();
+    const key = ev.dataTransfer.getData('text/plain');
+    const dragged = grid.querySelector(`[data-module-key="${CSS.escape(key)}"]`);
+    if(!dragged) return;
+    // place before the card under cursor (closest .card)
+    const target = ev.target.closest('.card-item[data-module-key]');
+    if(target && target !== dragged){
+      grid.insertBefore(dragged, target);
+      markDirty();
+    }
+  });
+
+  const $actions = document.getElementById('home-order-actions');
+  const $save = document.getElementById('save-home-order');
+  const $status = document.getElementById('save-home-order-status');
+  let dirty = false;
+  function markDirty(){
+    if(!isAuth) return;
+    dirty = true;
+    if($actions) $actions.hidden = false;
+    if($status) $status.textContent = '';
+  }
+  function currentOrder(){
+    return Array.from(grid.querySelectorAll('.card-item[data-module-key]')).map(el => el.dataset.moduleKey);
+  }
+
+  async function fetchDefaultOrder(){
+    try{
+      const r = await fetch('/api/home-layout', {headers:{'Accept':'application/json'}});
+      if(!r.ok) return null;
+      const j = await r.json();
+      return Array.isArray(j.order) ? j.order : null;
+    }catch(e){ return null; }
+  }
+
+  // If authenticated, preload saved order (no-op if server already rendered in saved order)
+  if(isAuth){
+    fetchDefaultOrder(); // not reordering client-side to avoid mismatch flashes
+  }
+
+  if($save){
+    $save.addEventListener('click', async () => {
+      if(!dirty) return;
+      const order = currentOrder();
+      try{
+        const r = await fetch('/api/home-layout', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({order})
+        });
+        if(r.ok){
+          dirty = false;
+          $status.textContent = 'Saved';
+          setTimeout(()=>{ $actions.hidden = true; }, 1200);
+        }else{
+          $status.textContent = 'Failed to save';
+        }
+      }catch(e){
+        $status.textContent = 'Network error';
+      }
+    });
+  }
+})();
+</script>
+
+  </div>
+{% endblock %}

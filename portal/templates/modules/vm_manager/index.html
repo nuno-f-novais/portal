@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ title }}</h2>
+
+<form method="post" action="{{ url_for('vm_manager.create_vm') }}" class="card" style="margin-bottom:1rem">
+  <div class="grid">
+    <div>
+      <label>Name</label>
+      <input type="text" name="name" placeholder="vm-name" required />
+    </div>
+    <div>
+      <label>OS Type</label>
+      <select name="os_type">
+        <option value="linux">Linux</option>
+        <option value="windows">Windows</option>
+      </select>
+    </div>
+    <div>
+      <label>Namespace</label>
+      <input type="text" name="namespace" value="poc-vms" />
+    </div>
+    <div>
+      <label>Source PVC (optional)</label>
+      <input type="text" name="source_pvc" placeholder="existing Windows PVC to clone" />
+    </div>
+  </div>
+  <button type="submit">Create VM (Skeleton)</button>
+</form>
+
+<h3>Example VMs</h3>
+<ul class="list">
+  {% for vm in vms %}
+    <li><strong>{{ vm.name }}</strong> — {{ vm.os }}</li>
+  {% endfor %}
+</ul>
+{% endblock %}

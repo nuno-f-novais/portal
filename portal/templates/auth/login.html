@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Sign in</h2>
+  <form action="{{ url_for('auth.login') }}{% if request.args.get('next') %}?next={{ request.args.get('next')|urlencode }}{% endif %}" method="post" class="auth-form">
+    <div class="form-row">
+      <label>Username</label>
+      <input name="username" autofocus required>
+    </div>
+    <div class="form-row">
+      <label>Password</label>
+      <input type="password" name="password" required>
+    </div>
+    <div class="form-row-inline">
+      <label><input type="checkbox" name="remember"> Remember me</label>
+    </div>
+    <div class="form-row">
+      <button type="submit">Sign in</button>
+    </div>
+  </form>
+{% endblock %}

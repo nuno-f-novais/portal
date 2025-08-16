@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Settings</h1>
+<div class="cards">
+  <a class="card card-link" href="{{ url_for('settings_portal_items') }}">
+    <div class="card-title">Portal Items</div>
+    <div class="card-body">Manage links shown on the home page and top menu.</div>
+  </a>
+  <a class="card card-link" href="{{ url_for('settings_modules') }}">
+    <div class="card-title">Modules</div>
+    <div class="card-body">Enable, label, and order auto-discovered modules.</div>
+  </a>
+</div>
+{% endblock %}

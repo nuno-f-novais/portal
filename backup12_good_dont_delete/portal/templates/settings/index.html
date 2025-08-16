@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="settings-page">
+  <h1 class="page-title">Settings</h1>
+  <div class="settings-tabs" style="margin-top: 1rem;">
+    <div class="tab-bar" style="display:flex; gap:.5rem; border-bottom:1px solid var(--border, #ddd);">
+      <button id="tab-btn-portal" class="btn btn-secondary" type="button" aria-selected="true">Portal & Modules</button>
+      <button id="tab-btn-kv" class="btn btn-light" type="button" aria-selected="false">Key/Value Settings</button>
+    </div>
+  </div>
+  <style>.tab-panel{display:none}.tab-panel.active{display:block}</style>
+
+
+  <!-- Portal Icons / Quick Links -->
+  <div id="tab-portal" class="tab-panel active">
+<section class="card panel">
+    <div class="panel-head">
+      <h2>Portal Icons</h2>
+      <div class="panel-actions">
+        <button id="add-icon" class="btn btn-secondary" type="button">Add icon</button>
+      </div>
+    </div>
+    <p class="muted">Links shown on the home page. Toggle whether they also appear in the top navigation.</p>
+
+    <div class="table-wrap">
+      <table class="table icons-table">
+        <thead>
+          <tr>
+            <th style="width: 80px;">Enabled</th>
+            <th>Title</th>
+            <th>URL</th>
+            <th>Icon Class</th>
+            <th style="width: 130px;">Show in Nav</th>
+            <th style="width: 100px;">New Tab</th>
+            <th style="width: 80px;">Remove</th>
+          </tr>
+        </thead>
+        <tbody id="portal-icons-body">
+          {% for it in portal_icons %}
+          {% set shownav = it.show_in_nav if ('show_in_nav' in it) else True %}
+          <tr class="pi-row">
+            <td><label class="switch">
+              <input type="checkbox" class="pi-enabled" {% if it.enabled %}checked{% endif %}>
+              <span class="slider"></span>
+            </label></td>
+            <td><input class="pi-title" type="text" placeholder="e.g. Docs" value="{{ it.title or '' }}"></td>
+            <td><input class="pi-url" type="url" placeholder="https://..." value="{{ it.url or '' }}"></td>
+            <td><input class="pi-icon" type="text" placeholder="fa-solid fa-book or bi bi-book" value="{{ it.icon_class or it.icon or '' }}"></td>
+            <td><label class="switch">
+              <input type="checkbox" class="pi-shownav" {% if shownav %}checked{% endif %}>
+              <span class="slider"></span>
+            </label></td>
+            <td><label class="switch">
+              <input type="checkbox" class="pi-newtab" {% if it.new_tab %}checked{% endif %}>
+              <span class="slider"></span>
+            </label></td>
+            <td><button class="btn btn-danger btn-sm pi-remove" type="button" title="Remove">×</button></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Modules -->
+  <section class="card panel">
+    <div class="panel-head">
+      <h2>Modules</h2>
+    </div>
+    <p class="muted">Enable modules and control where they appear.</p>
+
+    <div class="table-wrap">
+      <table class="table mods-table">
+        <thead>
+          <tr>
+            <th>Key</th>
+            <th>Label</th>
+            <th style="width: 120px;">Enabled</th>
+            <th style="width: 140px;">Show in Nav</th>
+            <th style="width: 160px;">Show in Home</th>
+            <th style="width: 160px;">Anonymous</th>
+            <th style="min-width: 220px;">Roles (comma‑separated)</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody id="modules-body">
+          {% for m in modules %}
+          <tr class="mod-row" data-key="{{ m.key }}">
+            <td class="mono">{{ m.key }}</td>
+            <td>
+              {% set raw_label = (m.label or '') %}
+              {% if not raw_label or raw_label|lower == (m.key or '')|lower %}
+                {{ (m.key or '')|replace('_',' ')|title }}
+              {% else %}
+                {{ raw_label }}
+              {% endif %}
+            </td>
+            <td><label class="switch">
+              <input type="checkbox" class="mod-enabled" {% if m.enabled %}checked{% endif %}>
+              <span class="slider"></span>
+            </label></td>
+            <td><label class="switch">
+              <input type="checkbox" class="mod-nav" {% if m.show_in_nav %}checked{% endif %}>
+              <span class="slider"></span>
+            </label></td>
+            <td><label class="switch">
+              <input type="checkbox" class="mod-home" {% if m.show_in_home %}checked{% endif %}>
+              <span class="slider"></span>
+            </label></td>
+            <td><label class="switch">
+              <input type="checkbox" class="mod-anon" {% if m.anonymous %}checked{% endif %}>
+              <span class="slider"></span>
+            </label></td>
+            <td><input class="mod-roles" type="text" placeholder="e.g. admin, editor" value="{{ (m.roles or [])|join(', ') }}"></td>
+            <td class="muted small">{{ m.description or '' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="actions-bar">
+    <button id="save-btn" class="btn btn-primary" type="button">Save</button>
+    <span id="save-status" class="save-status" aria-live="polite"></span>
+  </div>
+</div>
+
+<style>
+.settings-page { max-width: 1100px; margin: 0 auto; }
+.settings-page .page-title { margin: 12px 0 18px; font-size: 1.8rem; }
+.panel { padding: 16px; margin-bottom: 18px; }
+.panel-head { display:flex; align-items:center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.panel h2 { margin: 0; font-size: 1.35rem; }
+.panel .muted { margin: 6px 0 14px; color: var(--muted, #9aa3af); }
+.table-wrap { overflow-x:auto; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); }
+.table { width: 100%; border-collapse: separate; border-spacing: 0; }
+.table th, .table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); vertical-align: middle; }
+.table thead th { position: sticky; top: 0; background: rgba(0,0,0,0.25); backdrop-filter: blur(4px); text-align: left; font-weight: 600; }
+.table .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+input[type="text"], input[type="url"] { width: 100%; background: transparent; border: 1px solid rgba(255,255,255,0.15); color: inherit; padding: 8px 10px; border-radius: 8px; outline: none; }
+input[type="text"]:focus, input[type="url"]:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124,58,237,0.2); }
+.btn { border: 1px solid rgba(255,255,255,0.15); background: rgba(124,58,237,0.18); color: #e9d5ff; padding: 8px 12px; border-radius: 10px; cursor: pointer; }
+.btn:hover { filter: brightness(1.08); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-secondary { background: rgba(255,255,255,0.08); color: #ddd; border-color: rgba(255,255,255,0.18); }
+.btn-danger { background: rgba(220,38,38,0.2); border-color: rgba(220,38,38,0.35); color: #fecaca; }
+.btn-sm { padding: 6px 9px; border-radius: 8px; }
+.switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+.switch input { display:none; }
+.slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#555; transition:.2s; border-radius:24px; }
+.slider:before{ position:absolute; content:""; height:18px; width:18px; left:3px; top:3px; background:white; border-radius:50%; transition:.2s; }
+.switch input:checked + .slider{ background:#7c3aed; }
+.switch input:checked + .slider:before{ transform: translateX(20px); }
+.actions-bar { display:flex; align-items:center; gap: 12px; margin: 16px 0 40px; }
+.save-status { min-height: 1.2em; font-size: .95rem; color: var(--muted, #9aa3af); }
+.small { font-size: .9rem; }
+.muted { color: var(--muted, #9aa3af); }
+</style>
+
+<script>
+(function(){
+  const $ = (sel, root=document) => root.querySelector(sel);
+  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+  // Add icon rows
+  $("#add-icon")?.addEventListener("click", () => {
+    const tbody = $("#portal-icons-body");
+    const tr = document.createElement("tr");
+    tr.className = "pi-row";
+    tr.innerHTML = `
+      <td><label class="switch">
+        <input type="checkbox" class="pi-enabled" checked><span class="slider"></span>
+      </label></td>
+      <td><input class="pi-title" type="text" placeholder="e.g. Docs"></td>
+      <td><input class="pi-url" type="url" placeholder="https://..."></td>
+      <td><input class="pi-icon" type="text" placeholder="fa-solid fa-book or bi bi-book"></td>
+      <td><label class="switch">
+        <input type="checkbox" class="pi-shownav" checked><span class="slider"></span>
+      </label></td>
+      <td><label class="switch">
+        <input type="checkbox" class="pi-newtab" checked><span class="slider"></span>
+      </label></td>
+      <td><button class="btn btn-danger btn-sm pi-remove" type="button" title="Remove">×</button></td>`;
+    tbody.appendChild(tr);
+  });
+
+  // Remove icon row
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".pi-remove");
+    if (btn) btn.closest("tr").remove();
+  });
+
+  function collectPayload(){
+    // Icons payload
+    const icons = $$("#portal-icons-body .pi-row").map(row => ({
+      enabled: row.querySelector(".pi-enabled").checked,
+      title: row.querySelector(".pi-title").value.trim(),
+      url: row.querySelector(".pi-url").value.trim(),
+      icon_class: row.querySelector(".pi-icon").value.trim(),
+      show_in_nav: row.querySelector(".pi-shownav").checked,
+      new_tab: row.querySelector(".pi-newtab").checked
+    })).filter(it => it.title || it.url);
+
+    // Modules payload
+    const modules = {};
+    $$("#modules-body .mod-row").forEach(row => {
+      const key = row.getAttribute("data-key");
+      modules[key] = {
+        enabled: row.querySelector(".mod-enabled").checked,
+        show_in_nav: row.querySelector(".mod-nav").checked,
+        show_in_home: row.querySelector(".mod-home").checked,
+        anonymous: row.querySelector(".mod-anon").checked,
+        roles: row.querySelector(".mod-roles").value.trim()
+      };
+    });
+
+    return { icons, modules };
+  }
+
+  async function save(){
+    const btn = $("#save-btn");
+    const status = $("#save-status");
+    btn.disabled = true;
+    status.textContent = "Saving...";
+    try{
+      const payload = collectPayload();
+      const res = await fetch("/settings/admin/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json().catch(()=>({}));
+      if (res.ok && json.ok){
+        status.textContent = "Saved.";
+      } else {
+        status.textContent = "Save failed.";
+      }
+    }catch(err){
+      status.textContent = "Save failed.";
+    }finally{
+      btn.disabled = false;
+      setTimeout(()=>{ status.textContent=""; }, 2500);
+    }
+  }
+
+  $("#save-btn")?.addEventListener("click", save);
+})();
+</script>
+
+  </div>
+  <div id="tab-kv" class="tab-panel">
+    <section class="card panel">
+      <div class="panel-head">
+        <h2>Key/Value Settings</h2>
+        <div class="panel-actions">
+          <button id="kv-add" class="btn btn-secondary" type="button">Add row</button>
+          <button id="kv-save" class="btn btn-primary" type="button">Save changes</button>
+        </div>
+      </div>
+      <p class="muted">Generic application settings stored in the database. Avoid using reserved key <code>portal_settings</code>.</p>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th style="width:40%;">Key</th><th>Value</th><th style="width:80px;">Remove</th></tr></thead>
+          <tbody id="kv-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+  <script>
+  (function(){
+    const $ = (s,c=document)=>c.querySelector(s), $$=(s,c=document)=>Array.from(c.querySelectorAll(s));
+    const btnPortal=$('#tab-btn-portal'), btnKV=$('#tab-btn-kv'), portal=$('#tab-portal'), kv=$('#tab-kv');
+    function activate(which){ if(which==='portal'){ portal.classList.add('active'); kv.classList.remove('active'); btnPortal.classList.add('btn-secondary'); btnPortal.classList.remove('btn-light'); btnKV.classList.add('btn-light'); btnKV.classList.remove('btn-secondary'); } else { kv.classList.add('active'); portal.classList.remove('active'); btnKV.classList.add('btn-secondary'); btnKV.classList.remove('btn-light'); btnPortal.classList.add('btn-light'); btnPortal.classList.remove('btn-secondary'); if(!kv.dataset.loaded){ loadKV(); kv.dataset.loaded='1'; } } }
+    btnPortal.addEventListener('click',()=>activate('portal')); btnKV.addEventListener('click',()=>activate('kv'));
+    const kvBody=$('#kv-body'); const deleted=new Set();
+    function row(k='',v=''){ return `<tr class="kv-row"><td><input class="kv-key" type="text" value="${k}"></td><td><input class="kv-value" type="text" value="${v}"></td><td><button class="btn btn-danger kv-del" type="button">×</button></td></tr>`; }
+    function bind(){ $$('.kv-del', kvBody).forEach(b=>b.onclick=(e)=>{ const tr=e.target.closest('tr'); const k=$('.kv-key',tr).value.trim(); if(k) deleted.add(k); tr.remove(); }); }
+    function loadKV(){ fetch('/settings/admin/kv/list').then(r=>r.json()).then(d=>{ kvBody.innerHTML=''; (d.items||[]).forEach(it=>kvBody.insertAdjacentHTML('beforeend', row(it.key, it.value))); bind(); }); }
+    $('#kv-add').onclick=()=>{ kvBody.insertAdjacentHTML('beforeend', row('', '')); bind(); };
+    $('#kv-save').onclick=()=>{ const items=$$('.kv-row',kvBody).map(tr=>({key:$('.kv-key',tr).value.trim(), value:$('.kv-value',tr).value})).filter(it=>it.key); fetch('/settings/admin/kv/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items, deleted:Array.from(deleted)})}).then(r=>r.json()).then(()=>{ deleted.clear(); loadKV(); }); };
+  })();
+  </script>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Modules</h1>
+<form method="post">
+  <table class="table">
+    <thead><tr><th>Key</th><th>Enabled</th><th>Menu Visible</th><th>Menu Label</th><th>Order</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.key }}<input type="hidden" name="mods[{{ loop.index0 }}][key]" value="{{ r.key }}"></td>
+        <td><input type="checkbox" name="mods[{{ loop.index0 }}][enabled]" {% if r.enabled %}checked{% endif %}></td>
+        <td><input type="checkbox" name="mods[{{ loop.index0 }}][menu_visible]" {% if r.menu_visible %}checked{% endif %}></td>
+        <td><input name="mods[{{ loop.index0 }}][menu_label]" value="{{ r.label }}"></td>
+        <td><input type="number" name="mods[{{ loop.index0 }}][order]" value="{{ r.order }}"></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <button class="btn primary">Save</button>
+</form>
+{% endblock %}

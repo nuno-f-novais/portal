@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="settings-page">
+  <h1 class="page-title">Settings</h1>
+
+  <!-- Tabs bar -->
+  <div class="tabs" id="settings-tabs" data-active="portal">
+    <div class="tab-bar" role="tablist" aria-label="Settings sections">
+      <button class="tab-btn" data-tab="portal" id="tab-btn-portal" role="tab" aria-controls="tab-portal" aria-selected="true">Portal & Modules</button>
+      <button class="tab-btn" data-tab="kv" id="tab-btn-kv" role="tab" aria-controls="tab-kv" aria-selected="false">Key/Value Settings</button>
+    </div>
+  </div>
+
+  <!-- Panels -->
+  <div id="tab-portal" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-portal">
+    {% include "settings/tabs/_portal.html" %}
+  </div>
+
+  <div id="tab-kv" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-kv" hidden>
+    {% include "settings/tabs/_kv.html" %}
+  </div>
+
+  <!-- Page-only styles so you don't have to touch base.html -->
+  <style>
+    .settings-page { max-width: 1100px; margin: 0 auto; }
+    .settings-page .page-title { margin: 12px 0 18px; font-size: 1.8rem; }
+
+    /* Tabs */
+    .tab-bar{ display:flex; gap:.5rem; margin:6px 0 14px; }
+    .tab-btn{ border:1px solid var(--border, rgba(255,255,255,0.15)); padding:.45rem .8rem; border-radius:10px;
+              background:rgba(255,255,255,.06); color:inherit; cursor:pointer; }
+    .tab-btn[aria-selected="true"]{ background: rgba(124,58,237,.18); color:#e9d5ff; }
+
+    /* Panels */
+    .tab-panel[hidden]{ display:none !important; }
+
+    /* Card + table look compatible with your theme */
+    .panel { padding: 16px; margin-bottom: 18px; border-radius: 14px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); }
+    .panel-head { display:flex; align-items:center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+    .panel h2 { margin: 0; font-size: 1.35rem; }
+    .panel .muted { margin: 6px 0 14px; color: var(--muted, #9aa3af); }
+
+    .table-wrap { overflow-x:auto; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); }
+    table.table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    table.table th, table.table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); vertical-align: middle; text-align:left; }
+    table.table thead th { position: sticky; top: 0; background: rgba(0,0,0,0.25); backdrop-filter: blur(4px); font-weight: 600; }
+
+    input[type="text"], input[type="url"] { width: 100%; background: transparent; border: 1px solid rgba(255,255,255,0.15);
+      color: inherit; padding: 8px 10px; border-radius: 8px; outline: none; }
+    input[type="text"]:focus, input[type="url"]:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124,58,237,0.2); }
+
+    .btn { border: 1px solid rgba(255,255,255,0.15); background: rgba(124,58,237,0.18); color: #e9d5ff; padding: 8px 12px; border-radius: 10px; cursor: pointer; }
+    .btn:hover { filter: brightness(1.08); }
+    .btn-secondary { background: rgba(255,255,255,0.08); color: #ddd; border-color: rgba(255,255,255,0.18); }
+    .btn-danger { background: rgba(220,38,38,0.2); border-color: rgba(220,38,38,0.35); color: #fecaca; }
+    .btn-sm { padding: 6px 9px; border-radius: 8px; }
+
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch input { display:none; }
+    .slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#555; transition:.2s; border-radius:24px; }
+    .slider:before{ position:absolute; content:""; height:18px; width:18px; left:3px; top:3px; background:white; border-radius:50%; transition:.2s; }
+    .switch input:checked + .slider{ background:#7c3aed; }
+    .switch input:checked + .slider:before{ transform: translateX(20px); }
+
+    .actions-bar { display:flex; align-items:center; gap: 12px; margin: 16px 0 40px; }
+    .save-status { min-height: 1.2em; font-size: .95rem; color: var(--muted, #9aa3af); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  </style>
+
+  <!-- Tabs JS (pure and self-contained) -->
+  <script>
+  (function(){
+    var wrap = document.getElementById('settings-tabs');
+    if(!wrap) return;
+    var btnPortal = document.getElementById('tab-btn-portal');
+    var btnKV     = document.getElementById('tab-btn-kv');
+    var panelPortal = document.getElementById('tab-portal');
+    var panelKV     = document.getElementById('tab-kv');
+
+    function show(which){
+      var isPortal = which === 'portal';
+      btnPortal.setAttribute('aria-selected', isPortal ? 'true':'false');
+      btnKV.setAttribute('aria-selected', isPortal ? 'false':'true');
+      panelPortal.toggleAttribute('hidden', !isPortal);
+      panelKV.toggleAttribute('hidden', isPortal);
+    }
+    btnPortal.addEventListener('click', function(e){ e.preventDefault(); show('portal'); });
+    btnKV.addEventListener('click',     function(e){ e.preventDefault(); show('kv'); });
+    // initial
+    show(wrap.getAttribute('data-active') || 'portal');
+  })();
+  </script>
+</div>
+{% endblock %}

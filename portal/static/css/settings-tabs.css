@@ -1,0 +1,5 @@
+/* Guard: never show non-active panels */
+.settings-tabs .tab-panel[hidden]{ display:none !important; }
+
+/* Optional spacing that shouldn't override theme */
+.settings-tabs .tab-bar{ gap:.5rem; }

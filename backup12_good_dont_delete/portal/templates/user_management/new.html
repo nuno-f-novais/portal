@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <div>
+      <h1 class="title">New user</h1>
+      <p class="subtitle">Create an account and assign roles.</p>
+    </div>
+  </div>
+  <form method="post" class="card form-card">
+    
+  <div class="grid two">
+    <div>
+      <label class="form-label">Username</label>
+      <input type="text" class="input" name="username" value="{{ username or '' }}" required>
+    </div>
+    <div>
+      <label class="form-label">Password{% if mode=='edit' %} <span class="muted">(leave blank to keep)</span>{% endif %}</label>
+      <input type="password" class="input" name="password" {% if mode!='edit' %}required{% endif %}>
+    </div>
+  </div>
+  <div>
+    <label class="form-label">Roles <span class="muted">(comma-separated)</span></label>
+    <input type="text" class="input" name="roles" value="{{ roles_str or '' }}">
+  </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary">Create</button>
+      <a href="{{ url_for('user_management.index') }}" class="btn btn-plain">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

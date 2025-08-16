@@ -1,0 +1,18 @@
+
+{% extends "base.html" %}
+{% block content %}
+  <h2>{{ title }}</h2>
+  <div class="card" style="padding:1rem;max-width:720px">
+    <div class="form-row"><strong>ID:</strong> {{ user_info.id }}</div>
+    <div class="form-row"><strong>Username:</strong> {{ user_info.username }}</div>
+    <div class="form-row"><strong>Email:</strong> {{ user_info.email }}</div>
+    <div class="form-row"><strong>role (string):</strong> {{ (user_info.roles or [None])[0] }}</div>
+    <div class="form-row"><strong>roles (list):</strong> {{ user_info.roles }}</div>
+    <hr>
+    <div class="form-row"><strong>is_authenticated:</strong> {{ user_info.is_authenticated }}</div>
+    <div class="form-row"><strong>is_admin flag:</strong> {{ "admin" in (user_info.roles or []) }}</div>
+    <div class="form-row"><strong>admin via role string:</strong> {{ user_info.admin_via_role_string }}</div>
+    <div class="form-row"><strong>admin via roles list:</strong> {{ user_info.admin_via_roles_list }}</div>
+    <div class="form-row"><strong>admin_effective (used by module settings):</strong> {{ user_info.admin_effective }}</div>
+  </div>
+{% endblock %}

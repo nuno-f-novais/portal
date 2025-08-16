@@ -1,0 +1,68 @@
+<section class="card panel">
+  <div class="panel-head">
+    <h2>Key/Value Settings</h2>
+    <div class="panel-actions">
+      <button id="kv-add" class="btn btn-secondary" type="button">Add row</button>
+      <button id="kv-save" class="btn btn-primary" type="button">Save changes</button>
+      <span id="kv-status" class="muted small"></span>
+    </div>
+  </div>
+  <p class="muted">Generic application settings stored in the database. Avoid using reserved key <code>portal_settings</code>.</p>
+  <div class="table-wrap">
+    <table class="table" id="kv-table">
+      <thead>
+        <tr><th style="width:40%;">Key</th><th>Value</th><th style="width:90px;">Remove</th></tr>
+      </thead>
+      <tbody id="kv-body"></tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+(function(){
+  const $ = (s,c=document)=>c.querySelector(s), $$=(s,c=document)=>Array.from(c.querySelectorAll(s));
+  const tbody = $('#kv-body');
+  const status = $('#kv-status');
+  const addBtn = $('#kv-add');
+  const saveBtn = $('#kv-save');
+
+  function rowEl(key='', value=''){
+    const tr = document.createElement('tr');
+    tr.className = 'kv-row';
+    tr.innerHTML = '<td><input class="kv-key" type="text" placeholder="e.g. homepage_width" value="'+ key.replace(/"/g,'&quot;') +'"></td>' +
+                   '<td><input class="kv-val" type="text" placeholder="value" value="'+ value.replace(/"/g,'&quot;') +'"></td>' +
+                   '<td><button class="btn btn-danger kv-del" type="button">×</button></td>';
+    tr.querySelector('.kv-del').addEventListener('click', ()=> tr.remove());
+    return tr;
+  }
+
+  function load(){
+    fetch('/settings/admin/kv/list')  // your module endpoint
+      .then(r=>r.json()).then(d=>{
+        tbody.innerHTML='';
+        (d.items || []).forEach(it=> tbody.appendChild(rowEl(it.key, it.value)));
+      }).catch(()=>{});
+  }
+
+  function save(){
+    const items = $$('.kv-row', tbody).map(tr => ({
+      key: $('.kv-key', tr).value.trim(),
+      value: $('.kv-val', tr).value
+    })).filter(it => it.key);
+
+    saveBtn.disabled = true; status.textContent = 'Saving...';
+    fetch('/settings/admin/kv/save', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({items})
+    }).then(r=>r.json()).then(j=>{
+      status.textContent = (j && j.ok) ? 'Saved.' : 'Save failed.';
+      if(j && j.ok) load();
+    }).catch(()=>{ status.textContent='Save failed.'; })
+    .finally(()=>{ saveBtn.disabled=false; setTimeout(()=> status.textContent='', 1800); });
+  }
+
+  addBtn.addEventListener('click', ()=> tbody.appendChild(rowEl()));
+  saveBtn.addEventListener('click', save);
+  load();
+})();
+</script>

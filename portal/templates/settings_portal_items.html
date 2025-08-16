@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Portal Items</h1>
+
+<form method="post" class="panel">
+  <div class="panel-header">
+    <button class="btn primary" name="action" value="save">Save Changes</button>
+  </div>
+  <table class="table">
+    <thead><tr>
+      <th>ID</th><th>Title</th><th>Icon</th><th>URL</th><th>New Tab</th>
+      <th>Menu Label</th><th>Menu Visible</th><th>Order</th><th></th>
+    </tr></thead>
+    <tbody>
+      {% for it in items %}
+      <tr>
+        <td><input name="items[{{ loop.index0 }}][id]" value="{{ it.id }}" readonly></td>
+        <td><input name="items[{{ loop.index0 }}][title]" value="{{ it.title }}"></td>
+        <td><input name="items[{{ loop.index0 }}][icon]" value="{{ it.icon }}"></td>
+        <td><input name="items[{{ loop.index0 }}][url]" value="{{ it.url }}"></td>
+        <td class="center"><input type="checkbox" name="items[{{ loop.index0 }}][new_tab]" {% if it.new_tab %}checked{% endif %}></td>
+        <td><input name="items[{{ loop.index0 }}][menu_label]" value="{{ it.menu_label }}"></td>
+        <td class="center"><input type="checkbox" name="items[{{ loop.index0 }}][menu_visible]" {% if it.menu_visible %}checked{% endif %}></td>
+        <td><input type="number" name="items[{{ loop.index0 }}][order]" value="{{ it.order }}"></td>
+        <td class="right"><button type="submit" class="btn danger" name="delete_id" value="{{ it.id }}">Delete</button></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="panel-footer">
+    <button class="btn primary" name="action" value="save">Save Changes</button>
+  </div>
+</form>
+
+<h2>Add New</h2>
+<form method="post" class="panel">
+  <input type="hidden" name="action" value="add">
+  <div class="grid-2">
+    <label>Title <input name="title" required></label>
+    <label>Icon <input name="icon" value="link"></label>
+    <label>URL <input name="url" value="/"></label>
+    <label>Open in new tab <input type="checkbox" name="new_tab"></label>
+    <label>Menu label <input name="menu_label"></label>
+    <label>Menu visible <input type="checkbox" name="menu_visible" checked></label>
+    <label>Order <input type="number" name="order" value="0"></label>
+  </div>
+  <button class="btn">Add</button>
+</form>
+{% endblock %}

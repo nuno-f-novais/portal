@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ title or "Admin Settings" }}</h2>
+
+<section class="panel">
+  <div class="panel-header">
+    <h3>Portal Icons (Links)</h3>
+    <button id="add-icon" class="btn">Add Icon</button>
+  </div>
+  <div class="table-wrap">
+    <table class="table table-compact">
+      <thead><tr>
+        <th>Title</th><th>URL</th><th>Icon</th>
+        <th>In Nav</th><th>On Home</th><th>Enabled</th>
+      </tr></thead>
+      <tbody id="icons-body">
+        {% for key, v in (portal_icons | default({})).items() %}
+          <tr>
+            <td><input value="{{ v.title }}"></td>
+            <td><input value="{{ v.url or v.href }}"></td>
+            <td><input value="{{ v.icon_class or v.icon }}"></td>
+            <td class="c"><input type="checkbox" {% if v.show_in_nav or v.show_nav %}checked{% endif %}></td>
+            <td class="c"><input type="checkbox" {% if v.show_in_home or v.show_home %}checked{% endif %}></td>
+            <td class="c"><input type="checkbox" {% if v.enabled %}checked{% endif %}></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel" style="margin-top:2rem">
+  <div class="panel-header">
+    <h3>Modules</h3>
+  </div>
+  <div class="table-wrap">
+    <table class="table table-compact">
+      <thead><tr>
+        <th>Key</th><th>Label</th>
+        <th class="c" title="Show in Navbar">Nav</th>
+        <th class="c" title="Show on Home">Home</th>
+        <th class="c">Enabled</th>
+        <th class="c">Anonymous</th>
+        <th>Roles (CSV)</th>
+      </tr></thead>
+      <tbody id="mods-body">
+        {% for m in modules %}
+          <tr data-key="{{ m.name }}">
+            <td>{{ m.name }}</td>
+            <td>{{ m.label }}</td>
+            <td class="c"><input type="checkbox" {% if m.show_in_nav %}checked{% endif %}></td>
+            <td class="c"><input type="checkbox" {% if m.show_in_home %}checked{% endif %}></td>
+            <td class="c"><input type="checkbox" {% if m.enabled %}checked{% endif %}></td>
+            <td class="c"><input type="checkbox" {% if m.anonymous %}checked{% endif %}></td>
+            <td><input placeholder="e.g. admin, user" value="{{ m.roles | default([]) | join(', ') }}"></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="actions">
+  <button id="save" class="btn btn-primary">Save</button>
+  <span id="save-result" class="muted" style="margin-left:.75rem"></span>
+</div>
+
+<style>
+.panel{border:1px solid var(--border);background:var(--card-bg);border-radius:12px;padding:1rem}
+.panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
+.table-wrap{overflow-x:auto}
+.table{width:100%;border-collapse:separate;border-spacing:0}
+.table th,.table td{border-bottom:1px solid var(--border);padding:.5rem .5rem;vertical-align:middle}
+.table th{font-weight:700;text-align:left}
+.table td.c,.table th.c{text-align:center;width:80px}
+.table-compact th,.table-compact td{padding:.4rem .5rem}
+input[type="text"], input:not([type]), input[type="url"], input[type="search"]{width:100%;padding:.45rem;border:1px solid var(--border);border-radius:.5rem;background:var(--bg);color:var(--fg)}
+.btn{border:1px solid var(--border);background:var(--bg);color:var(--fg);padding:.4rem .7rem;border-radius:.6rem;cursor:pointer}
+.btn:hover{background:var(--card-bg)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover{opacity:.95}
+.muted{color:var(--muted)}
+/* Auth form */
+.auth-form{max-width:420px;border:1px solid var(--border);background:var(--card-bg);padding:1rem;border-radius:12px}
+.form-row{margin:.75rem 0;display:flex;flex-direction:column;gap:.25rem}
+.form-row-inline{margin:.75rem 0}
+.auth-form input[type='text'], .auth-form input[type='password'], .auth-form input:not([type]){padding:.5rem;border:1px solid var(--border);border-radius:.5rem;background:var(--bg);color:var(--fg')}
+.auth-form button{padding:.5rem .9rem;border:1px solid var(--border);background:var(--accent);color:var(--accent-ink);border-radius:.6rem;cursor:pointer}
+.auth-form button:hover{opacity:.95}
+</style>
+
+<script>
+const $ = sel => document.querySelector(sel);
+const qsa = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+
+$("#add-icon").onclick = () => {
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input value="New Link"></td>
+    <td><input value="/"></td>
+    <td><input value="link"></td>
+    <td class="c"><input type="checkbox"></td>
+    <td class="c"><input type="checkbox"></td>
+    <td class="c"><input type="checkbox" checked></td>`;
+  $("#icons-body").appendChild(tr);
+};
+
+$("#save").onclick = async () => {
+  const btn = $("#save");
+  const out = $("#save-result");
+  btn.disabled = true; out.textContent = "Saving...";
+
+  try {
+    // Collect icons
+    const icons = qsa("#icons-body tr").map(tr => {
+      const inputs = qsa("input", tr);
+      return {
+        title: inputs[0].value.trim(),
+        url: inputs[1].value.trim(),
+        icon_class: inputs[2].value.trim(),
+        show_nav: inputs[3].checked,
+        show_home: inputs[4].checked,
+        enabled: inputs[5].checked
+      };
+    });
+
+    // Collect modules (inputs order matches header)
+    const modules = {};
+    qsa("#mods-body tr").forEach(tr => {
+      const key = tr.getAttribute("data-key");
+      const inputs = qsa("input", tr);
+      modules[key] = {
+        show_nav:  inputs[0].checked,
+        show_home: inputs[1].checked,
+        enabled:   inputs[2].checked,
+        anonymous: inputs[3].checked,
+        roles:     inputs[4].value
+      };
+    });
+
+    const res = await fetch("/settings/admin/save", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ icons, modules })
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      out.textContent = "Save failed (" + res.status + ").";
+      console.error("Save error", res.status, txt);
+    } else {
+      const data = await res.json().catch(()=>({ok:false,err:"Invalid JSON"}));
+      out.textContent = data.ok ? "Saved." : "Save error.";
+      if (data.ok) location.reload();
+    }
+  } catch (e) {
+    console.error(e);
+    out.textContent = "Save error (exception).";
+  } finally {
+    btn.disabled = false;
+  }
+};
+</script>
+{% endblock %}
